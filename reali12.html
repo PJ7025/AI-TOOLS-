@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI vs Human Text Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151a2d;
+      --accent: #4f8cff;
+      --accent-soft: rgba(79, 140, 255, 0.15);
+      --danger: #ff4f6a;
+      --success: #38d996;
+      --text-main: #f8f9ff;
+      --text-soft: #9aa2c2;
+      --border-soft: #252a3d;
+      --font-body: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --transition-fast: 160ms ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #18254a 0, #060818 55%, #02030a 100%);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1120px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow:
+        0 32px 80px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.02);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    }
+
+    @media (max-width: 880px) {
+      .app {
+        display: block;
+      }
+    }
+
+    .left,
+    .right {
+      padding: 28px 26px;
+    }
+
+    .left {
+      border-right: 1px solid var(--border-soft);
+      background: radial-gradient(circle at top left, rgba(79, 140, 255, 0.12), transparent 55%);
+    }
+
+    @media (max-width: 880px) {
+      .left {
+        border-right: none;
+        border-bottom: 1px solid var(--border-soft);
+      }
+    }
+
+    .right {
+      background: radial-gradient(circle at top right, rgba(56, 217, 150, 0.14), transparent 65%);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-pill {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(79, 140, 255, 0.16);
+      border: 1px solid rgba(79, 140, 255, 0.55);
+      color: #c5d3ff;
+    }
+
+    p.subtitle {
+      color: var(--text-soft);
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(154, 162, 194, 0.45);
+      color: #cdd3ee;
+      background: rgba(2, 5, 18, 0.8);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 210px;
+      max-height: 360px;
+      resize: vertical;
+      background: rgba(5, 9, 24, 0.88);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-soft);
+      padding: 14px 14px 36px 14px;
+      color: var(--text-main);
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+        background var(--transition-fast);
+    }
+
+    textarea::placeholder {
+      color: #5a6284;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.6), 0 0 0 10px rgba(79, 140, 255, 0.09);
+      background: rgba(5, 9, 24, 0.96);
+    }
+
+    .textarea-footer {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .limit {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background var(--transition-fast), transform var(--transition-fast),
+        box-shadow var(--transition-fast), opacity var(--transition-fast);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #4f8cff, #7f5dff);
+      color: white;
+      box-shadow: 0 12px 30px rgba(79, 140, 255, 0.35);
+    }
+
+    button.primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 8px 20px rgba(79, 140, 255, 0.2);
+    }
+
+    button.secondary {
+      background: rgba(8, 12, 30, 0.9);
+      color: #cfd5f5;
+      border: 1px solid rgba(154, 162, 194, 0.3);
+    }
+
+    button.secondary:hover {
+      background: rgba(15, 21, 45, 0.9);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .legal-note {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    /* Right / results */
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .result-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #d9e1ff;
+    }
+
+    .confidence-chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      border: 1px solid rgba(154, 162, 194, 0.4);
+      background: rgba(5, 8, 20, 0.9);
+      color: var(--text-soft);
+    }
+
+    .score-card {
+      background: rgba(5, 9, 22, 0.92);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 14px 14px 16px 14px;
+      margin-bottom: 16px;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .label-main {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .label-main span {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+
+    .label-main .ai {
+      background: rgba(255, 79, 106, 0.16);
+      border: 1px solid rgba(255, 79, 106, 0.7);
+      color: #ffc2cd;
+    }
+
+    .label-main .human {
+      background: rgba(56, 217, 150, 0.16);
+      border: 1px solid rgba(56, 217, 150, 0.7);
+      color: #cff7e3;
+    }
+
+    .score-pill {
+      font-variant-numeric: tabular-nums;
+      font-size: 0.86rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(8, 12, 30, 0.9);
+      border: 1px solid rgba(154, 162, 194, 0.45);
+      color: #d0d6ff;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: radial-gradient(circle at left, rgba(56, 217, 150, 0.26), transparent 50%),
+        radial-gradient(circle at right, rgba(255, 79, 106, 0.3), transparent 50%),
+        #050818;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(90deg, #38d996, #ffd257, #ff4f6a);
+      transform-origin: left center;
+      transition: transform 220ms ease-out;
+    }
+
+    .bar-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .insights {
+      margin-top: 10px;
+    }
+
+    .insights h3 {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #d9e1ff;
+    }
+
+    .insight-list {
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      line-height: 1.6;
+    }
+
+    .insight-list li::before {
+      content: "•";
+      color: #4f8cff;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
+    .metrics {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .metric-card {
+      background: rgba(5, 8, 20, 0.9);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 9px 10px 10px;
+      font-size: 0.78rem;
+    }
+
+    .metric-label {
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.7rem;
+      color: #8f98c0;
+      margin-bottom: 3px;
+    }
+
+    .metric-value {
+      font-variant-numeric: tabular-nums;
+      color: #e3e7ff;
+    }
+
+    .metric-note {
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .disclaimer {
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: #848daf;
+      line-height: 1.5;
+    }
+
+    .disclaimer strong {
+      color: #cbd3ff;
+    }
+
+    .empty-state {
+      font-size: 0.85rem;
+      color: #8189ad;
+      padding: 40px 14px;
+      text-align: center;
+    }
+
+    .empty-state span {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px dashed rgba(154, 162, 194, 0.4);
+      margin-bottom: 8px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="left">
+      <div class="title-row">
+        <h1>
+          AI / Human Text Analyzer
+          <span class="title-pill">Experimental</span>
+        </h1>
+      </div>
+      <p class="subtitle">
+        Paste any paragraph or short essay. We’ll estimate whether it’s
+        <strong>more likely AI-generated or human-written</strong> using
+        stylistic signals (burstiness, repetition, structure, etc.).
+      </p>
+
+      <div class="badge-row">
+        <span class="badge">Heuristic scoring</span>
+        <span class="badge">No upload</span>
+        <span class="badge">Client-side only</span>
+      </div>
+
+      <textarea
+        id="inputText"
+        placeholder="Paste text here... Ideally 100+ words for more stable analysis."
+      ></textarea>
+
+      <div class="textarea-footer">
+        <span id="charCount" class="limit">0 chars • 0 words</span>
+        <span>Longer inputs usually produce more reliable signals.</span>
+      </div>
+
+      <div class="actions">
+        <button id="analyzeBtn" class="primary">
+          Analyze text
+        </button>
+        <button id="clearBtn" class="secondary">
+          Clear
+        </button>
+      </div>
+
+      <p class="legal-note">
+        This demo is <strong>not</strong> a definitive AI detector. It uses simple
+        statistical and linguistic heuristics and can be wrong in both directions.
+      </p>
+    </div>
+
+    <div class="right">
+      <div class="result-header">
+        <div class="result-title">Detection result</div>
+        <div class="confidence-chip" id="confidenceChip">Waiting for input…</div>
+      </div>
+
+      <div class="score-card" id="scoreCard">
+        <div class="empty-state" id="emptyState">
+          <span>No analysis yet</span>
+          <div>Run an analysis to see AI-likeness vs human-likeness scores.</div>
+        </div>
+
+        <div id="resultContent" style="display:none;">
+          <div class="label-row">
+            <div class="label-main" id="labelMain">
+              Likely AI-generated
+              <span class="ai" id="labelBadge">AI-like style</span>
+            </div>
+            <div class="score-pill" id="scorePill">
+              AI-likeness: 0.00
+            </div>
+          </div>
+
+          <div class="bar-track">
+            <div class="bar-fill" id="barFill" style="width:100%; transform:scaleX(0);"></div>
+          </div>
+          <div class="bar-scale">
+            <span>More human</span>
+            <span>More AI</span>
+          </div>
+
+          <div class="insights">
+            <h3>Key signals</h3>
+            <ul class="insight-list" id="insightList"></ul>
+          </div>
+
+          <div class="metrics">
+            <div class="metric-card">
+              <div class="metric-label">Average sentence length</div>
+              <div class="metric-value" id="avgSentenceLen">–</div>
+              <div class="metric-note" id="avgSentenceNote"></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Vocabulary diversity</div>
+              <div class="metric-value" id="vocabDiversity">–</div>
+              <div class="metric-note" id="vocabNote"></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Burstiness (sentence variety)</div>
+              <div class="metric-value" id="burstiness">–</div>
+              <div class="metric-note" id="burstNote"></div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Repetitiveness score</div>
+              <div class="metric-value" id="repetitionScore">–</div>
+              <div class="metric-note" id="repeatNote"></div>
+            </div>
+          </div>
+
+          <div class="disclaimer">
+            <strong>Disclaimer:</strong>
+            This is a lightweight, browser-only heuristic. Research has shown that
+            even experts and dedicated tools can misclassify AI vs human texts.
+            Use this only as a rough indicator, never as the sole basis for
+            grading, punishment, or high-stakes decisions.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("inputText");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const charCount = document.getElementById("charCount");
+
+    const emptyState = document.getElementById("emptyState");
+    const resultContent = document.getElementById("resultContent");
+    const confidenceChip = document.getElementById("confidenceChip");
+    const labelMain = document.getElementById("labelMain");
+    const labelBadge = document.getElementById("labelBadge");
+    const scorePill = document.getElementById("scorePill");
+    const barFill = document.getElementById("barFill");
+    const insightList = document.getElementById("insightList");
+
+    const avgSentenceLenEl = document.getElementById("avgSentenceLen");
+    const avgSentenceNoteEl = document.getElementById("avgSentenceNote");
+    const vocabDiversityEl = document.getElementById("vocabDiversity");
+    const vocabNoteEl = document.getElementById("vocabNote");
+    const burstinessEl = document.getElementById("burstiness");
+    const burstNoteEl = document.getElementById("burstNote");
+    const repetitionScoreEl = document.getElementById("repetitionScore");
+    const repeatNoteEl = document.getElementById("repeatNote");
+
+    function updateCharCount() {
+      const text = input.value;
+      const chars = text.length;
+      const words = text.trim()
+        ? text.trim().split(/\s+/).filter(Boolean).length
+        : 0;
+      charCount.textContent = chars + " chars • " + words + " words";
+    }
+
+    input.addEventListener("input", updateCharCount);
+    updateCharCount();
+
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      updateCharCount();
+      emptyState.style.display = "block";
+      resultContent.style.display = "none";
+      confidenceChip.textContent = "Waiting for input…";
+    });
+
+    function splitSentences(text) {
+      // naive but serviceable sentence split
+      return text
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(/(?<=[.!?])\s+/)
+        .filter((s) => s.length > 0);
+    }
+
+    function tokenize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s']/gi, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+
+    function stdDev(arr) {
+      if (arr.length <= 1) return 0;
+      const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+      const variance =
+        arr.reduce((sum, x) => sum + (x - mean) * (x - mean), 0) /
+        (arr.length - 1);
+      return Math.sqrt(variance);
+    }
+
+    function analyzeText(text) {
+      const cleaned = text.replace(/\s+/g, " ").trim();
+      if (!cleaned) return null;
+
+      const sentences = splitSentences(cleaned);
+      const tokens = tokenize(cleaned);
+
+      const wordCount = tokens.length;
+      const sentenceCount = sentences.length || 1;
+
+      const sentenceLengths = sentences.map((s) => tokenize(s).length || 0);
+      const avgSentenceLength =
+        sentenceLengths.reduce((a, b) => a + b, 0) / sentenceCount;
+      const sentenceStd = stdDev(sentenceLengths);
+
+      const uniqueTokens = new Set(tokens);
+      const typeTokenRatio =
+        wordCount > 0 ? uniqueTokens.size / wordCount : 0;
+
+      // simple repetition score: how skewed is word frequency?
+      const freq = {};
+      for (const t of tokens) {
+        freq[t] = (freq[t] || 0) + 1;
+      }
+      const counts = Object.values(freq);
+      const maxFreq = counts.length ? Math.max(...counts) : 0;
+      const repetition =
+        wordCount > 0 ? maxFreq / wordCount : 0; // higher = more repetitive
+
+      // Additional simple signals
+      const avgWordLength =
+        wordCount > 0
+          ? tokens.reduce((sum, t) => sum + t.length, 0) / wordCount
+          : 0;
+
+      const passiveLikeMatches = cleaned.match(
+        /\b(be|is|are|was|were|been|being)\s+\w+ed\b/gi
+      );
+      const passiveIndicator = passiveLikeMatches
+        ? passiveLikeMatches.length / sentenceCount
+        : 0;
+
+      const transitionMatches = cleaned.match(
+        /\b(however|moreover|furthermore|additionally|in conclusion|overall|in summary|therefore|thus)\b/gi
+      );
+      const transitionDensity = transitionMatches
+        ? transitionMatches.length / sentenceCount
+        : 0;
+
+      return {
+        wordCount,
+        sentenceCount,
+        avgSentenceLength,
+        sentenceStd,
+        typeTokenRatio,
+        repetition,
+        avgWordLength,
+        passiveIndicator,
+        transitionDensity,
+      };
+    }
+
+    function scoreAIlikeness(metrics) {
+      let score = 0;
+      let weightSum = 0;
+
+      function addWeighted(value, ideal, tolerance, weight, invert = false) {
+        // score from 0..1 based on distance from ideal
+        const dist = Math.abs(value - ideal);
+        const local = Math.max(0, 1 - dist / tolerance);
+        const contribution = invert ? 1 - local : local;
+        score += contribution * weight;
+        weightSum += weight;
+      }
+
+      // Heuristics (inspired by research trends and common detector notions):
+
+      // 1. Medium, consistent sentence length is more AI-like;
+      // very short or very long, with high variance, is more human-like.
+      addWeighted(metrics.avgSentenceLength, 22, 10, 1.2, false);
+
+      // 2. Lower burstiness (lower std dev) is more AI-like.
+      // If std is low, we boost AI-likeness.
+      const burstNormalized = Math.min(metrics.sentenceStd / 12, 2); // >24 treated the same
+      addWeighted(burstNormalized, 0.6, 0.6, 1.3, false);
+
+      // 3. Vocabulary diversity: AI often is moderately diverse but not extreme.
+      // Very low diversity (lots of repetition) can be AI *or* weak human; very
+      // high diversity is often human.
+      addWeighted(metrics.typeTokenRatio, 0.4, 0.2, 1.0, false);
+
+      // 4. Repetition: very low repetition can be AI-like;
+      // very high repetition often human chat / ESL or spam.
+      addWeighted(metrics.repetition, 0.03, 0.04, 1.0, true);
+
+      // 5. Many formal transitions ("however", "moreover"...)
+      // can be a sign of AI's academic style.
+      addWeighted(metrics.transitionDensity, 0.2, 0.15, 0.7, false);
+
+      // 6. Passive constructions: AI tends to slightly over-use
+      // formal passive voice in some genres.
+      addWeighted(metrics.passiveIndicator, 0.3, 0.3, 0.5, false);
+
+      const normalized = weightSum > 0 ? score / weightSum : 0.5;
+      // clamp 0..1
+      return Math.min(1, Math.max(0, normalized));
+    }
+
+    function formatPercent(x) {
+      return (x * 100).toFixed(1) + "%";
+    }
+
+    function updateUI(metrics, aiScore) {
+      emptyState.style.display = "none";
+      resultContent.style.display = "block";
+
+      const humanScore = 1 - aiScore;
+
+      const label =
+        aiScore >= 0.55 ? "More likely AI-generated" :
+        aiScore <= 0.45 ? "More likely human-written" :
+        "Uncertain: mixed signals";
+
+      const badgeClass = aiScore >= humanScore ? "ai" : "human";
+      const badgeText = aiScore >= humanScore ? "AI-like style" : "Human-like style";
+
+      labelMain.innerHTML =
+        label +
+        ' <span class="' +
+        badgeClass +
+        '" id="labelBadge">' +
+        badgeText +
+        "</span>";
+
+      scorePill.textContent = "AI-likeness: " + aiScore.toFixed(2);
+      barFill.style.transform = "scaleX(" + aiScore.toFixed(3) + ")";
+
+      // Confidence heuristic based on length:
+      let conf = "Low confidence (very short text)";
+      if (metrics.wordCount >= 80 && metrics.wordCount < 200) {
+        conf = "Medium confidence";
+      } else if (metrics.wordCount >= 200) {
+        conf = "Higher confidence (longer text)";
+      }
+      confidenceChip.textContent = conf;
+
+      // Metrics
+      avgSentenceLenEl.textContent =
+        metrics.avgSentenceLength.toFixed(1) + " words / sentence";
+      if (metrics.avgSentenceLength < 10) {
+        avgSentenceNoteEl.textContent =
+          "Very short sentences overall – often seen in chatty or note-style human writing.";
+      } else if (metrics.avgSentenceLength > 30) {
+        avgSentenceNoteEl.textContent =
+          "Very long sentences – common in dense academic human writing, or verbose AI outputs.";
+      } else {
+        avgSentenceNoteEl.textContent =
+          "Moderate sentence length – typical of polished AI or careful human prose.";
+      }
+
+      vocabDiversityEl.textContent =
+        (metrics.typeTokenRatio * 100).toFixed(1) + " % unique words";
+      if (metrics.typeTokenRatio < 0.25) {
+        vocabNoteEl.textContent =
+          "Low lexical diversity – many words repeat; could be simple human writing or templated AI.";
+      } else if (metrics.typeTokenRatio > 0.45) {
+        vocabNoteEl.textContent =
+          "High diversity – more idiosyncratic word choice, often human-like.";
+      } else {
+        vocabNoteEl.textContent =
+          "Moderate diversity – common in AI responses tuned for clarity.";
+      }
+
+      burstinessEl.textContent = metrics.sentenceStd.toFixed(1);
+      if (metrics.sentenceStd < 5) {
+        burstNoteEl.textContent =
+          "Low burstiness – sentence lengths are quite uniform, often a sign of AI-style structure.";
+      } else if (metrics.sentenceStd > 15) {
+        burstNoteEl.textContent =
+          "Very high burstiness – big swings in sentence length, common in human essays and storytelling.";
+      } else {
+        burstNoteEl.textContent =
+          "Moderate burstiness – mix of short and long sentences.";
+      }
+
+      repetitionScoreEl.textContent = metrics.repetition.toFixed(3);
+      if (metrics.repetition > 0.08) {
+        repeatNoteEl.textContent =
+          "High repetition of certain words – can be human (limited vocab, emphasis) or low-effort AI.";
+      } else if (metrics.repetition < 0.03) {
+        repeatNoteEl.textContent =
+          "Very low repetition – diverse wording, sometimes a sign of advanced AI or skilled human writing.";
+      } else {
+        repeatNoteEl.textContent =
+          "Moderate repetition – nothing unusual detected.";
+      }
+
+      // Insights list
+      insightList.innerHTML = "";
+      const insights = [];
+
+      if (aiScore > 0.65) {
+        insights.push(
+          "Overall pattern leans strongly toward AI-like structure and consistency."
+        );
+      } else if (aiScore < 0.35) {
+        insights.push(
+          "Overall pattern leans strongly toward human-like variability and style."
+        );
+      } else {
+        insights.push(
+          "Signals are mixed; both AI-like and human-like features are present."
+        );
+      }
+
+      if (metrics.sentenceStd < 5) {
+        insights.push(
+          "Sentence lengths are highly uniform (low burstiness), which many detectors associate with AI writing."
+        );
+      } else if (metrics.sentenceStd > 15) {
+        insights.push(
+          "Sentence lengths vary greatly (high burstiness), a pattern often linked with human writing."
+        );
+      }
+
+      if (metrics.transitionDensity > 0.25) {
+        insights.push(
+          "Frequent formal transitions (e.g., 'however', 'moreover') suggest an academic or AI-generated style."
+        );
+      }
+
+      if (metrics.typeTokenRatio > 0.45) {
+        insights.push(
+          "Very rich vocabulary; in combination with strong burstiness, this often corresponds to human authorship."
+        );
+      }
+
+      if (metrics.wordCount < 60) {
+        insights.push(
+          "The text is short, so any AI vs human judgment is especially unreliable."
+        );
+      }
+
+      insights.forEach((t) => {
+        const li = document.createElement("li");
+        li.textContent = t;
+        insightList.appendChild(li);
+      });
+    }
+
+    analyzeBtn.addEventListener("click", () => {
+      const text = input.value;
+      const metrics = analyzeText(text);
+      if (!metrics) {
+        alert("Please paste some text to analyze.");
+        return;
+      }
+      // Simulate small processing delay
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = "Analyzing…";
+
+      setTimeout(() => {
+        const aiScore = scoreAIlikeness(metrics);
+        updateUI(metrics, aiScore);
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = "Analyze text";
+      }, 120);
+    });
+  </script>
+</body>
+</html>
